@@ -15,6 +15,8 @@ const ThemeContext = createContext<ThemeContextType>({
   setTheme: () => null,
 })
 
+export { ThemeContext }
+
 export function ThemeProvider({ children, defaultTheme = "system" }: { children: React.ReactNode, defaultTheme?: Theme }) {
   const [theme, setTheme] = useState<Theme>(defaultTheme)
   const [mounted, setMounted] = useState(false)
