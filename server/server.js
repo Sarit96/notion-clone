@@ -1,19 +1,34 @@
+//This is the server file for the authentication API
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import promisePool from './config/db.config.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import { body, validationResult } from 'express-validator';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 
-// Middleware
+// Security middleware
+
+
+app.use(helmet());
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// Rate limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: 'Too many login attempts, please try again after 15 minutes'
+});
 
 // Test database connection
 const testConnection = async () => {
@@ -35,7 +50,7 @@ const initializeDatabase = async () => {
     // Switch to auth_db
     await promisePool.query('USE auth_db');
     console.log('Switched to auth_db');
-    
+
     // Create users table
     await promisePool.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -47,13 +62,9 @@ const initializeDatabase = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
-    
+
     console.log('Users table created or verified successfully');
 
-    // Verify table structure
-    const [columns] = await promisePool.query('DESCRIBE users');
-    console.log('Table structure:', columns.map(col => `${col.Field} (${col.Type})`).join(', '));
-    
   } catch (error) {
     console.error('Database initialization error:', error.message);
     process.exit(1); // Exit if database initialization fails
@@ -70,42 +81,42 @@ const verifyDatabaseStructure = async () => {
     const [databases] = await promisePool.query('SHOW DATABASES LIKE ?', ['auth_db']);
     if (databases.length > 0) {
       console.log('✓ Database "auth_db" exists');
-      
+
       // Switch to auth_db
       await promisePool.query('USE auth_db');
-      
+
       // Check users table structure
       const [columns] = await promisePool.query('DESCRIBE users');
       console.log('\nUsers table structure:');
       columns.forEach(column => {
         console.log(`${column.Field}: ${column.Type} ${column.Null === 'NO' ? 'NOT NULL' : ''} ${column.Key === 'PRI' ? 'PRIMARY KEY' : ''} ${column.Extra}`);
       });
-      
+
       // Test insert and select
       const testUser = {
         username: 'test_user',
         email: 'test@example.com',
         password: 'test_password'
       };
-      
+
       // Try to delete test user if exists
       await promisePool.query('DELETE FROM users WHERE email = ?', [testUser.email]);
-      
+
       // Insert test user
       const [insertResult] = await promisePool.query(
         'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
         [testUser.username, testUser.email, testUser.password]
       );
       console.log('\n✓ Test user inserted successfully with ID:', insertResult.insertId);
-      
+
       // Select test user
       const [users] = await promisePool.query('SELECT * FROM users WHERE email = ?', [testUser.email]);
       console.log('✓ Test user retrieved successfully:', users[0].username);
-      
+
       // Clean up - delete test user
       await promisePool.query('DELETE FROM users WHERE email = ?', [testUser.email]);
       console.log('✓ Test user cleaned up successfully');
-      
+
     } else {
       console.error('Database "auth_db" does not exist!');
     }
@@ -132,6 +143,27 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
+// Input validation middleware
+const validateRegistration = [
+  body('username').trim().isLength({ min: 3, max: 30 }).escape(),
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 6 })
+];
+
+const validateLogin = [
+  body('email').isEmail().normalizeEmail(),
+  body('password').notEmpty()
+];
+
+// Error handling middleware
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  next();
+};
+
 // Protected route example
 app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
@@ -152,18 +184,9 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 });
 
 // Register route
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', validateRegistration, handleValidationErrors, async (req, res) => {
   try {
     const { username, email, password } = req.body;
-
-    // Debug log
-    console.log('Received registration request:', { username, email });
-
-    // Validate input
-    if (!username || !email || !password) {
-      console.log('Missing required fields:', { username: !!username, email: !!email, password: !!password });
-      return res.status(400).json({ message: 'All fields are required' });
-    }
 
     // Check if user already exists
     const [existingUsers] = await promisePool.query(
@@ -172,7 +195,6 @@ app.post('/api/auth/register', async (req, res) => {
     );
 
     if (existingUsers.length > 0) {
-      console.log('User already exists:', email);
       return res.status(400).json({ message: 'User already exists' });
     }
 
@@ -180,15 +202,11 @@ app.post('/api/auth/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    console.log('Attempting to insert new user:', email);
-
     // Insert new user
     const [result] = await promisePool.query(
       'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
       [username, email, hashedPassword]
     );
-
-    console.log('User inserted successfully:', result.insertId);
 
     // Generate JWT token
     const token = jwt.sign(
@@ -207,23 +225,15 @@ app.post('/api/auth/register', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Registration error details:', error);
-    res.status(500).json({ 
-      message: 'Internal server error',
-      details: error.message 
-    });
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
 // Login route
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, validateLogin, handleValidationErrors, async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
-    }
 
     // Get user from database
     const [users] = await promisePool.query(
@@ -269,6 +279,12 @@ app.post('/api/auth/login', async (req, res) => {
 // Basic route for testing
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the authentication API' });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something broke!' });
 });
 
 // Start server
