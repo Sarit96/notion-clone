@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface User {
-  id: number;
-  username: string;
+export interface User {
+  id?: string;
+  username?: string;
   email: string;
-  name?: string;
+  name: string;
   picture?: string;
 }
 

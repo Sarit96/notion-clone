@@ -8,6 +8,14 @@ interface LoginModalProps {
   onClose: () => void;
 }
 
+interface GoogleUser {
+  email: string;
+  name: string;
+  picture: string;
+  id?: string;
+  username?: string;
+}
+
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,17 +23,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { setUser } = useAuth();
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleLogin = async (response: any) => {
     try {
-      console.log('Google Login Success:', credentialResponse);
-      const decoded: any = jwtDecode(credentialResponse.credential);
-      console.log('Decoded token:', decoded);
+      const { credential } = response;
+      const decoded: any = jwtDecode(credential);
       
-      // Create user object matching our User interface
-      const googleUser = {
+      const googleUser: GoogleUser = {
         email: decoded.email,
         name: decoded.name,
-        picture: decoded.picture
+        picture: decoded.picture,
+        id: decoded.sub,
+        username: decoded.email.split('@')[0]
       };
 
       // Store the token and user data
@@ -34,7 +42,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       onClose();
     } catch (err) {
       console.error('Google login error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred during Google login');
     }
   };
 
@@ -85,7 +92,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         {/* Google Sign-In Button */}
         <div className="mb-6 flex justify-center">
           <GoogleLogin
-            onSuccess={handleGoogleSuccess}
+            onSuccess={handleGoogleLogin}
             onError={handleGoogleError}
             type="standard"
             theme="filled_blue"

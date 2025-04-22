@@ -7,6 +7,15 @@
 .env*.local
 /server/.env
 /server/.env.*
+/server/.env.local
+/server/.env.development
+/server/.env.test
+/server/.env.production
+/server/config.env
+/server/config.*.env
+.env.development.local
+.env.local
+.env
 
 # Dependencies
 /node_modules
@@ -129,3 +138,26 @@ playwright-report/
 .next/
 out/
 node_modules/
+
+# Local development
+my-notion-next/
+-tree -r HEAD --name-only
+
+# TypeScript incremental build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Local SSL certificates
+*.crt
+*.key
+*.pem
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Backup files
+*.bak
+*.backup
+*~

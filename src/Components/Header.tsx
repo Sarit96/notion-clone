@@ -6,18 +6,23 @@ import LoginModal from './LoginModal';
 import SignUpModal from './SignUpModal';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { Menu, X, User, LogOut } from 'lucide-react';
 
-function Header() {
+interface HeaderProps {
+  isLoginModalOpen: boolean;
+  setIsLoginModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export default function Header({ isLoginModalOpen, setIsLoginModalOpen }: HeaderProps) {
   const { theme, setTheme } = useTheme();
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
-  const profileRef = useRef(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
       }
     }
@@ -123,5 +128,3 @@ function Header() {
     </>
   );
 }
-
-export default Header;
