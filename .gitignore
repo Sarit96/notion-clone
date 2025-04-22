@@ -5,6 +5,8 @@
 .env.test
 .env.production
 .env*.local
+/server/.env
+/server/.env.*
 
 # Dependencies
 /node_modules
