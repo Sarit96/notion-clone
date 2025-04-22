@@ -1,0 +1,71 @@
+[33mcommit 558136731e64ac1a644971b59a143dcd23823c23[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/google-auth-v2[m[33m, [m[1;32mmaster[m[33m)[m
+Author: Sarit96 <swapna.m@webkorps.com>
+Date:   Tue Apr 22 15:57:00 2025 +0530
+
+    feat: added Google authentication and implement sidebar navigation
+
+M	.gitignore
+
+[33mcommit a61f304eaf63ef1832e39c92577f467f2bc06b14[m[33m ([m[1;31morigin/master[m[33m)[m
+Author: Sarit96 <swapna.m@webkorps.com>
+Date:   Sun Apr 20 13:25:26 2025 +0530
+
+    Initial commit: Project setup with React, Clerk, and Convex
+
+A	convex.json
+A	convex/auth.config.js
+M	package-lock.json
+M	package.json
+A	postcss.config.js
+D	src/App.js
+A	src/App.tsx
+A	src/Components/Footer.tsx
+A	src/Components/Header.tsx
+A	src/Components/Heroes.tsx
+A	src/Components/Icons.tsx
+A	src/Components/Login.tsx
+A	src/Components/ThemeProvider.tsx
+A	src/Svg/Logo.svg
+A	src/Svg/heroesSvg.svg
+A	src/convex/README.md
+A	src/convex/_generated/api.d.ts
+A	src/convex/_generated/api.js
+A	src/convex/_generated/dataModel.d.ts
+A	src/convex/_generated/server.d.ts
+A	src/convex/_generated/server.js
+A	src/convex/auth.config.tsx
+A	src/convex/tsconfig.json
+A	src/custom.d.ts
+M	src/index.css
+A	src/index.tsx
+A	src/logo.png
+A	src/pages/login.tsx
+A	src/reportWebVitals.ts
+A	src/setupTests.ts
+A	tailwind.config.js
+A	tsconfig.json
+
+[33mcommit 1ba15605d8077a880cc70ec34faeaf61f97fdbf8[m
+Author: Sarit96 <swapna.m@webkorps.com>
+Date:   Sat Apr 19 01:33:41 2025 +0530
+
+    Initialize project using Create React App
+
+A	.gitignore
+A	README.md
+A	package-lock.json
+A	package.json
+A	public/favicon.ico
+A	public/index.html
+A	public/logo192.png
+A	public/logo512.png
+A	public/manifest.json
+A	public/robots.txt
+A	src/App.css
+A	src/App.js
+A	src/App.test.js
+A	src/index.css
+A	src/index.js
+A	src/logo.svg
+A	src/reportWebVitals.js
+A	src/setupTests.js
