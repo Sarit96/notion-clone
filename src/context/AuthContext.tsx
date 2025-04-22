@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface User {
-  id?: number;
-  username?: string;
+  id: number;
+  username: string;
   email: string;
   name?: string;
   picture?: string;
@@ -64,4 +64,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};

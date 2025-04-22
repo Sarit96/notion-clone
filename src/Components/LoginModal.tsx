@@ -63,6 +63,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         throw new Error(data.message || 'Login failed');
       }
 
+      // Store the token and user data
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
@@ -80,7 +81,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Login to Notion</h2>
-        
+
         {/* Google Sign-In Button */}
         <div className="mb-6 flex justify-center">
           <GoogleLogin
@@ -94,7 +95,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             width="250"
           />
         </div>
-        
+
         <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
@@ -159,4 +160,4 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   );
 };
 
-export default LoginModal; 
+export default LoginModal;

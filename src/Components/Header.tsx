@@ -1,27 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useTheme } from "./ThemeProvider"
-import { Moon, Sun } from "./Icons"
-import logo from "../Svg/Logo.svg"
+import { useTheme } from "./ThemeProvider";
+import { Moon, Sun } from "./Icons";
+import logo from "../Svg/Logo.svg";
 import LoginModal from './LoginModal';
 import SignUpModal from './SignUpModal';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
-interface HeaderProps {
-  isLoginModalOpen: boolean;
-  setIsLoginModalOpen: (isOpen: boolean) => void;
-}
-
-function Header({ isLoginModalOpen, setIsLoginModalOpen }: HeaderProps) {
+function Header() {
   const { theme, setTheme } = useTheme();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
-  const profileRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef(null);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+    function handleClickOutside(event) {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
         setIsProfileOpen(false);
       }
     }
@@ -35,10 +31,7 @@ function Header({ isLoginModalOpen, setIsLoginModalOpen }: HeaderProps) {
   return (
     <>
       <header className="h-14 px-4 sm:px-6 flex items-center justify-between border-b border-border">
-        <Link
-          to="/"
-          className="flex items-center"
-        >
+        <Link to="/" className="flex items-center">
           <img src={logo} width={24} height={24} alt="Notion Logo" className="h-6 w-6" />
           <span className="font-semibold text-xl ml-2 hidden sm:inline">Notion</span>
         </Link>
@@ -109,39 +102,13 @@ function Header({ isLoginModalOpen, setIsLoginModalOpen }: HeaderProps) {
           </div>
           <button
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="relative p-2 rounded-lg transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background group overflow-hidden"
+            className="p-1.5 sm:p-2 rounded-full transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
             aria-label="Toggle theme"
           >
-            <div className="relative">
-              <span 
-                className={`absolute inset-0 transform transition-all duration-500 ease-in-out ${
-                  theme === "light" 
-                    ? "rotate-0 scale-100 opacity-100" 
-                    : "rotate-90 scale-0 opacity-0"
-                }`}
-              >
-                <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300 transform transition-transform duration-300 ease-in-out group-hover:scale-110" />
-              </span>
-              <span 
-                className={`absolute inset-0 transform transition-all duration-500 ease-in-out ${
-                  theme === "dark"
-                    ? "rotate-0 scale-100 opacity-100" 
-                    : "-rotate-90 scale-0 opacity-0"
-                }`}
-              >
-                <Sun className="h-5 w-5 text-gray-600 dark:text-gray-300 transform transition-transform duration-300 ease-in-out group-hover:scale-110" />
-              </span>
-              <span className="invisible">
-                <Moon className="h-5 w-5" />
-              </span>
-            </div>
-            <span 
-              className={`absolute inset-0 bg-gradient-to-tr transition-all duration-300 ease-in-out ${
-                theme === "light"
-                  ? "from-yellow-100/0 via-yellow-100/0 to-yellow-100/0 group-hover:from-yellow-100/50 group-hover:via-yellow-100/25 group-hover:to-yellow-100/0"
-                  : "from-blue-900/0 via-blue-900/0 to-blue-900/0 group-hover:from-blue-900/50 group-hover:via-blue-900/25 group-hover:to-blue-900/0"
-              }`}
-            />
+            {theme === "light" ?
+              <Moon className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" /> :
+              <Sun className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
+            }
           </button>
         </div>
       </header>
@@ -154,7 +121,7 @@ function Header({ isLoginModalOpen, setIsLoginModalOpen }: HeaderProps) {
         onClose={() => setIsSignUpModalOpen(false)} 
       />
     </>
-  )
+  );
 }
 
-export default Header
+export default Header;
