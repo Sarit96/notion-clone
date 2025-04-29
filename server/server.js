@@ -1,4 +1,4 @@
-//This is the server file for the authentication API
+// This is the server file for the authentication API
 
 import express from 'express';
 import cors from 'cors';
@@ -16,7 +16,26 @@ dotenv.config();
 const app = express();
 
 // Security middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: true
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Remove rate limiting temporarily for testing
+// const authLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000,
+//   max: 5,
+//   message: { message: 'Too many login attempts, please try again after 15 minutes' }
+// });
 
 app.use(helmet());
 app.use(cors());
@@ -293,4 +312,4 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   testConnection();
   verifyDatabaseStructure();
-}); 
+});
