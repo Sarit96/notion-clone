@@ -34,6 +34,11 @@ export default function Sidebar({
     };
   }, [isCollapsed, setIsCollapsed]);
 
+  function handleAddSubNote() {
+    // TODO: Implement sub note creation logic
+    alert('Add sub note (to be implemented)');
+  }
+
   return (
     <div
       ref={sidebarRef}
@@ -61,8 +66,15 @@ export default function Sidebar({
             <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">
               CURRENT PAGE
             </h2>
-            <div className="mt-2 text-base font-medium text-gray-900 dark:text-white">
-              {currentPageTitle}
+            <div className="mt-2 flex items-center text-base font-medium text-gray-900 dark:text-white">
+              <span>{currentPageTitle}</span>
+              <button
+                className="ml-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                title="Add sub note"
+                onClick={handleAddSubNote}
+              >
+                <span className="text-lg font-bold text-blue-600">+</span>
+              </button>
             </div>
           </div>
         )}
