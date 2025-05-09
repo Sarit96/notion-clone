@@ -1,18 +1,36 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "./Icons";
+import Trash from './Trash';
 
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (isCollapsed: boolean) => void;
   currentPageTitle?: string;
+  onSectionSelect?: (section: 'note' | 'trash') => void;
 }
 
 export default function Sidebar({
   isCollapsed,
   setIsCollapsed,
   currentPageTitle,
+  onSectionSelect,
 }: SidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const ellipsisRef = useRef<HTMLButtonElement>(null);
+  // Demo: mock current page object
+  const [currentPage, setCurrentPage] = useState<{ title: string; id: number } | null>(
+    currentPageTitle ? { title: currentPageTitle, id: 1 } : null
+  );
+  const [trashedPages, setTrashedPages] = useState<{ title: string; id: number }[]>([]);
+  const [selectedSection, setSelectedSection] = useState<'note' | 'trash'>('note');
+
+  // Update currentPage when currentPageTitle changes
+  useEffect(() => {
+    if (currentPageTitle) {
+      setCurrentPage({ title: currentPageTitle, id: 1 });
+    }
+  }, [currentPageTitle]);
 
   useEffect(() => {
     // Function to handle clicks outside the sidebar
@@ -36,7 +54,39 @@ export default function Sidebar({
 
   function handleAddSubNote() {
     // TODO: Implement sub note creation logic
-    alert('Add sub note (to be implemented)');
+    alert("Add sub note (to be implemented)");
+  }
+
+  // Handler for Move to Trash
+  function handleMoveToTrash() {
+    if (currentPage) {
+      setTrashedPages((prev) => [...prev, currentPage]);
+      setCurrentPage(null);
+      setShowMenu(false);
+    }
+  }
+
+  // Handler for restoring a trashed page
+  function handleRestore(page: { title: string; id: number }) {
+    setCurrentPage(page);
+    setTrashedPages((prev) => prev.filter((p) => p.id !== page.id));
+  }
+
+  // Handler for permanently deleting a trashed page
+  function handleDelete(page: { title: string; id: number }) {
+    setTrashedPages((prev) => prev.filter((p) => p.id !== page.id));
+  }
+
+  // Handler for selecting Trash
+  function handleSelectTrash() {
+    setSelectedSection('trash');
+    if (onSectionSelect) onSectionSelect('trash');
+  }
+
+  // Handler for selecting Note (current page)
+  function handleSelectNote() {
+    setSelectedSection('note');
+    if (onSectionSelect) onSectionSelect('note');
   }
 
   return (
@@ -61,15 +111,73 @@ export default function Sidebar({
       {/* Sidebar content */}
       <div className="p-4">
         {/* Current Page Title */}
-        {currentPageTitle && !isCollapsed && (
+        {currentPage && !isCollapsed && (
           <div className="mb-6">
             <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">
               CURRENT PAGE
             </h2>
-            <div className="mt-2 flex items-center text-base font-medium text-gray-900 dark:text-white">
-              <span>{currentPageTitle}</span>
+            <div className="mt-2 flex items-center text-base font-medium text-gray-900 dark:text-white gap-2">
+              {/* Dropdown arrow */}
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-gray-400"
+              >
+                <path
+                  d="M6 8L10 12L14 8"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {/* Bold title */}
+              <span className="font-bold">{currentPage.title}</span>
+              {/* Ellipsis button */}
               <button
-                className="ml-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                ref={ellipsisRef}
+                className="ml-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors relative"
+                title="More options"
+                onClick={() => setShowMenu((prev) => !prev)}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="text-gray-400"
+                >
+                  <circle cx="4" cy="10" r="1.5" fill="currentColor" />
+                  <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+                  <circle cx="16" cy="10" r="1.5" fill="currentColor" />
+                </svg>
+                {/* Popup menu */}
+                {showMenu && (
+                  <div
+                    className="absolute left-0 mt-2 w-64 bg-gray-900 text-white rounded-lg shadow-2xl z-50 border border-gray-700 p-1 animate-fade-in"
+                    style={{ top: "110%" }}
+                  >
+                    <button className="flex items-center w-full px-3 py-2 hover:bg-gray-800 rounded transition-all">
+                      <span className="mr-3">✏️</span>
+                      <span className="flex-1 text-left">Rename</span>
+                      <span className="text-xs text-gray-400 ml-2">
+                        Ctrl+⇧+R
+                      </span>
+                    </button>
+                    <button className="flex items-center w-full px-3 py-2 hover:bg-gray-800 rounded transition-all" onClick={handleMoveToTrash}>
+                      <span className="mr-3">🗑️</span>
+                      <span className="flex-1 text-left">Move to Trash</span>
+                    </button>
+                  </div>
+                )}
+              </button>
+              {/* Plus button */}
+              <button
+                className="ml-auto p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 title="Add sub note"
                 onClick={handleAddSubNote}
               >
@@ -166,7 +274,10 @@ export default function Sidebar({
 
           {/* Trash */}
           <div className="group">
-            <div className="flex items-center gap-3 p-2.5 hover:bg-gray-100 dark:hover:bg-gray-800/80 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm">
+            <div
+              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm ${selectedSection === 'trash' ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-800/80'}`}
+              onClick={handleSelectTrash}
+            >
               <div className="p-1.5 bg-red-50 dark:bg-red-900/20 rounded-lg group-hover:bg-red-100 dark:group-hover:bg-red-900/40 transition-colors duration-200">
                 <svg
                   className="w-5 h-5 text-red-600 dark:text-red-400"

@@ -56,6 +56,8 @@ export default function Note() {
     const [showCoverModal, setShowCoverModal] = useState(false);
     const [selectedIcon, setSelectedIcon] = useState<Icon | null>(null);
     const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
+    const [selectedSection, setSelectedSection] = useState<'note' | 'trash'>('note');
+    const [trashedNotes, setTrashedNotes] = useState<{ title: string; content: string; id: number }[]>([]);
     const { user } = useAuth();
     const saveTimeoutRef = useRef<NodeJS.Timeout>();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -298,150 +300,225 @@ export default function Note() {
         setShowCoverModal(false);
     };
 
+    // Handler for moving note to trash
+    function handleMoveToTrash() {
+        setTrashedNotes(prev => [...prev, { title, content, id: Date.now() }]);
+        setTitle('Untitled');
+        setContent('');
+        setHasContent(false);
+        setSelectedIcon(null);
+        setSelectedCover(null);
+        setSelectedSection('trash');
+    }
+
+    // Handler for restoring a trashed note
+    function handleRestore(note: { title: string; content: string; id: number }) {
+        setTitle(note.title);
+        setContent(note.content);
+        setHasContent(!!note.content);
+        setTrashedNotes(prev => prev.filter(n => n.id !== note.id));
+        setSelectedSection('note');
+    }
+
+    // Handler for permanently deleting a trashed note
+    function handleDelete(note: { title: string; content: string; id: number }) {
+        setTrashedNotes(prev => prev.filter(n => n.id !== note.id));
+    }
+
     return (
         <div className="flex h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
             <Sidebar 
                 isCollapsed={isCollapsed} 
                 setIsCollapsed={setIsCollapsed}
                 currentPageTitle={title}
+                onSectionSelect={setSelectedSection}
             />
             
             <div className="flex-1 overflow-auto scroll-smooth">
-                <div className={`max-w-4xl mx-auto px-8 py-8 ${!hasContent ? 'h-full flex flex-col' : ''}`}>
-                    {/* Status bar */}
-                    <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-6">
-                        <div className="flex items-center gap-2">
-                            {isSaving ? (
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                                    <span>Saving...</span>
-                                </div>
-                            ) : lastSaved ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-gray-400">Last saved</span>
-                                    <span className="font-medium">{lastSaved.toLocaleTimeString()}</span>
-                                </div>
-                            ) : null}
+                {selectedSection === 'note' ? (
+                    <div className={`max-w-4xl mx-auto px-8 py-8 ${!hasContent ? 'h-full flex flex-col' : ''}`}>
+                        {/* Status bar */}
+                        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-6">
+                            <div className="flex items-center gap-2">
+                                {isSaving ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                        <span>Saving...</span>
+                                    </div>
+                                ) : lastSaved ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-400">Last saved</span>
+                                        <span className="font-medium">{lastSaved.toLocaleTimeString()}</span>
+                                    </div>
+                                ) : null}
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div className={`${!hasContent ? 'flex-1 flex flex-col items-center justify-center -mt-20' : ''}`}>
-                        {/* Cover image */}
-                        {selectedCover && (
-                            <div className="w-full h-56 mb-8 rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl">
-                                <img
-                                    src={selectedCover.url}
-                                    alt={selectedCover.name}
-                                    className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
+                        
+                        <div className={`${!hasContent ? 'flex-1 flex flex-col items-center justify-center -mt-20' : ''}`}>
+                            {/* Cover image */}
+                            {selectedCover && (
+                                <div className="w-full h-56 mb-8 rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl">
+                                    <img
+                                        src={selectedCover.url}
+                                        alt={selectedCover.name}
+                                        className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Title input with icon */}
+                            <div className="flex items-center gap-4 mb-8">
+                                {selectedIcon && (
+                                    <div className="text-4xl transform hover:scale-110 transition-transform duration-200">
+                                        {selectedIcon.emoji}
+                                    </div>
+                                )}
+                                <input
+                                    type="text"
+                                    value={title}
+                                    onChange={handleTitleChange}
+                                    className="text-4xl font-bold outline-none bg-transparent text-gray-900 dark:text-white text-center hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg cursor-text transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                                    placeholder="Untitled"
+                                    spellCheck={false}
+                                    onClick={(e) => e.currentTarget.select()}
                                 />
                             </div>
-                        )}
 
-                        {/* Title input with icon */}
-                        <div className="flex items-center gap-4 mb-8">
-                            {selectedIcon && (
-                                <div className="text-4xl transform hover:scale-110 transition-transform duration-200">
-                                    {selectedIcon.emoji}
-                                </div>
-                            )}
-                            <input
-                                type="text"
-                                value={title}
-                                onChange={handleTitleChange}
-                                className="text-4xl font-bold outline-none bg-transparent text-gray-900 dark:text-white text-center hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg cursor-text transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                                placeholder="Untitled"
-                                spellCheck={false}
-                                onClick={(e) => e.currentTarget.select()}
-                            />
-                        </div>
+                            {/* Add icon and cover buttons */}
+                            <div className="flex items-center gap-4 mb-8 text-sm">
+                                <button 
+                                    onClick={() => setShowIconModal(true)}
+                                    className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+                                >
+                                    <span className="text-xl">{selectedIcon?.emoji || '🎯'}</span>
+                                    {selectedIcon ? 'Change icon' : 'Add icon'}
+                                </button>
+                                <button 
+                                    onClick={() => setShowCoverModal(true)}
+                                    className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+                                >
+                                    <span className="text-xl">{selectedCover ? '🖼️' : '🖼️'}</span>
+                                    {selectedCover ? 'Change cover' : 'Add cover'}
+                                </button>
+                            </div>
 
-                        {/* Add icon and cover buttons */}
-                        <div className="flex items-center gap-4 mb-8 text-sm">
-                            <button 
-                                onClick={() => setShowIconModal(true)}
-                                className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
-                            >
-                                <span className="text-xl">{selectedIcon?.emoji || '🎯'}</span>
-                                {selectedIcon ? 'Change icon' : 'Add icon'}
-                            </button>
-                            <button 
-                                onClick={() => setShowCoverModal(true)}
-                                className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
-                            >
-                                <span className="text-xl">{selectedCover ? '🖼️' : '🖼️'}</span>
-                                {selectedCover ? 'Change cover' : 'Add cover'}
-                            </button>
-                        </div>
-
-                        {/* Content area */}
-                        <div className="w-full relative">
-                            <textarea
-                                ref={textareaRef}
-                                value={content}
-                                placeholder="Type '/' for commands"
-                                onChange={handleContentChange}
-                                onKeyDown={handleKeyDown}
-                                className={`w-full outline-none resize-none bg-transparent text-gray-800 dark:text-gray-200 placeholder-gray-400 text-center transition-all duration-200 ${
-                                    !hasContent 
-                                        ? 'min-h-[100px]' 
-                                        : 'min-h-[500px] text-left px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
-                                }`}
-                            />
-                            
-                            {/* Command menu */}
-                            {showCommandMenu && (
-                                <div className="absolute top-0 left-0 w-80 bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all duration-200">
-                                    <input
-                                        type="text"
-                                        value={commandSearch}
-                                        onChange={handleCommandSearch}
-                                        placeholder="Search commands..."
-                                        className="w-full px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-transparent text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                                        autoFocus
-                                    />
-                                    <div className="max-h-64 overflow-y-auto">
-                                        {filteredCommands.map((cmd) => (
-                                            <button
-                                                key={cmd.id}
-                                                onClick={() => cmd.action()}
-                                                className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors duration-200"
-                                            >
-                                                <span className="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg">
-                                                    {cmd.icon}
-                                                </span>
-                                                <div>
-                                                    <div className="font-medium text-gray-900 dark:text-white">
-                                                        {cmd.title}
+                            {/* Content area */}
+                            <div className="w-full relative">
+                                <textarea
+                                    ref={textareaRef}
+                                    value={content}
+                                    placeholder="Type '/' for commands"
+                                    onChange={handleContentChange}
+                                    onKeyDown={handleKeyDown}
+                                    className={`w-full outline-none resize-none bg-transparent text-gray-800 dark:text-gray-200 placeholder-gray-400 text-center transition-all duration-200 ${
+                                        !hasContent 
+                                            ? 'min-h-[100px]' 
+                                            : 'min-h-[500px] text-left px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
+                                    }`}
+                                />
+                                
+                                {/* Command menu */}
+                                {showCommandMenu && (
+                                    <div className="absolute top-0 left-0 w-80 bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all duration-200">
+                                        <input
+                                            type="text"
+                                            value={commandSearch}
+                                            onChange={handleCommandSearch}
+                                            placeholder="Search commands..."
+                                            className="w-full px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-transparent text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                                            autoFocus
+                                        />
+                                        <div className="max-h-64 overflow-y-auto">
+                                            {filteredCommands.map((cmd) => (
+                                                <button
+                                                    key={cmd.id}
+                                                    onClick={() => cmd.action()}
+                                                    className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors duration-200"
+                                                >
+                                                    <span className="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                                        {cmd.icon}
+                                                    </span>
+                                                    <div>
+                                                        <div className="font-medium text-gray-900 dark:text-white">
+                                                            {cmd.title}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                            {cmd.description}
+                                                        </div>
                                                     </div>
-                                                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {cmd.description}
-                                                    </div>
+                                                </button>
+                                            ))}
+                                            {filteredCommands.length === 0 && (
+                                                <div className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                                                    No commands found
                                                 </div>
-                                            </button>
-                                        ))}
-                                        {filteredCommands.length === 0 && (
-                                            <div className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                                                No commands found
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Action buttons - only show when there's content */}
-                    {hasContent && (
-                        <div className="flex items-center gap-2 justify-end mt-6">
-                            <button className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200">
-                                Share
-                            </button>
-                            <button className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200">
-                                ••• 
-                            </button>
-                        </div>
-                    )}
-                </div>
+                        {/* Action buttons - only show when there's content */}
+                        {hasContent && (
+                            <div className="flex items-center gap-2 justify-end mt-6">
+                                <button className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200">
+                                    Share
+                                </button>
+                                <button className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200">
+                                    ••• 
+                                </button>
+                                <button
+                                    className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-800 rounded-lg transition-all duration-200"
+                                    onClick={handleMoveToTrash}
+                                    title="Move to Trash"
+                                >
+                                    🗑️
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    // Trash view
+                    <div className="max-w-2xl mx-auto px-8 py-8">
+                        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                            <span className="inline-block p-2 bg-red-50 text-red-500 rounded-lg">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </span>
+                            Trash
+                        </h2>
+                        {trashedNotes.length === 0 ? (
+                            <p className="text-gray-500 mt-8">No items in trash.</p>
+                        ) : (
+                            <ul className="space-y-4 mt-6">
+                                {trashedNotes.map(note => (
+                                    <li key={note.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center justify-between">
+                                        <div>
+                                            <div className="font-semibold text-lg text-gray-900 dark:text-white">{note.title}</div>
+                                            <div className="text-gray-500 text-sm truncate max-w-xs">{note.content}</div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                className="px-3 py-1 text-sm text-green-600 bg-green-50 hover:bg-green-100 rounded-lg"
+                                                onClick={() => handleRestore(note)}
+                                            >
+                                                Restore
+                                            </button>
+                                            <button
+                                                className="px-3 py-1 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg"
+                                                onClick={() => handleDelete(note)}
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Icon selection modal */}
