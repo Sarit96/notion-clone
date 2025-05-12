@@ -7,9 +7,10 @@ import Header from './Components/Header';
 import Heroes from './Components/Heroes';
 import Footer from './Components/Footer';
 import Workspace from './Components/Workspace';
+import Note from './Components/Note';
 
-// Your Google Client ID
-const GOOGLE_CLIENT_ID = "986510645662-btr3t579jc3i971352thh4de6fo5770c.apps.googleusercontent.com";
+//  Google Client ID
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 function App() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -20,7 +21,7 @@ function App() {
 
   return (
     <GoogleOAuthProvider 
-      clientId={GOOGLE_CLIENT_ID}
+      clientId={GOOGLE_CLIENT_ID!}
     >
       <BrowserRouter>
         <ThemeProvider>
@@ -31,6 +32,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Heroes onLoginClick={handleLoginClick} />} />
                   <Route path="/workspace" element={<Workspace />} />
+                  <Route path="/note" element={<Note />} />
                 </Routes>
               </main>
               <Footer />

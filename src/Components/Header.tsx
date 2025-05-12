@@ -21,12 +21,14 @@ export default function Header({ isLoginModalOpen, setIsLoginModalOpen }: Header
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Close dropdown when clicking outside
     function handleClickOutside(event: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
       }
     }
 
+    // Add/remove click listener
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);

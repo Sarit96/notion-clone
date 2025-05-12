@@ -18,7 +18,8 @@
 .env
 
 # Dependencies
-/node_modules
+node_modules/
+Server/node_modules/
 /.pnp
 .pnp.js
 
@@ -26,8 +27,8 @@
 /coverage
 
 # Production build
-/build
-/dist
+dist/
+build/
 /.next
 /out
 
@@ -107,7 +108,7 @@ lcov-report/
 *.kate-swp
 
 # NPM package lock files (if you want to ignore them)
-# package-lock.json
+package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
 

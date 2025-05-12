@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       const { credential } = response;
       const decoded: any = jwtDecode(credential);
       
-      const googleUser: GoogleUser = {
+      const googleUser = {
         email: decoded.email,
         name: decoded.name,
         picture: decoded.picture,
@@ -36,12 +37,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         username: decoded.email.split('@')[0]
       };
 
+      // Send Google user data to backend
+      const res = await axios.post('/api/auth/google', googleUser);
+      
       // Store the token and user data
-      localStorage.setItem('googleUser', JSON.stringify(googleUser));
-      setUser(googleUser);
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+      setUser(res.data.user);
       onClose();
     } catch (err) {
       console.error('Google login error:', err);
+      setError('Failed to login with Google');
     }
   };
 
@@ -70,12 +76,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         throw new Error(data.message || 'Login failed');
       }
 
+      if (!data.token || !data.user) {
+        throw new Error('Invalid response from server');
+      }
+
       // Store the token and user data
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
       onClose();
     } catch (err) {
+      console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during login');
     } finally {
       setIsLoading(false);
