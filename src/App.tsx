@@ -1,3 +1,4 @@
+/// <reference types="react-scripts" />
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';

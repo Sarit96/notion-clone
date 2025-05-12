@@ -59,7 +59,7 @@ export default function Note() {
     const [selectedSection, setSelectedSection] = useState<'note' | 'trash'>('note');
     const [trashedNotes, setTrashedNotes] = useState<{ title: string; content: string; id: number; icon?: Icon | null; cover_url?: string | null }[]>([]);
     const { user } = useAuth();
-    const saveTimeoutRef = useRef<NodeJS.Timeout>();
+    const saveTimeoutRef = useRef<number | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const navigate = useNavigate();
 
@@ -218,7 +218,7 @@ export default function Note() {
         }
 
         // Set a timeout to save after 1 second of inactivity
-        saveTimeoutRef.current = setTimeout(async () => {
+        saveTimeoutRef.current = window.setTimeout(async () => {
             setIsSaving(true);
             try {
                 // Save note to API
