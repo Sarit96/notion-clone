@@ -32,7 +32,8 @@ Object.values(models).forEach(model => {
  * Database Synchronization
  * - Tests the database connection
  * - Syncs all models with the database schema
- * - Uses alter: true to update existing tables without dropping them
+ * - Uses force: true in development to recreate tables
+ * - Uses alter: true in production to update existing tables
  * - Exits the process if synchronization fails
  */
 const syncDatabase = async () => {
@@ -42,7 +43,8 @@ const syncDatabase = async () => {
     console.log('Database connection has been established successfully.');
 
     // Sync all models
-    await sequelize.sync({ alter: true });
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    await sequelize.sync({ force: isDevelopment });
     console.log('Database synchronized successfully');
   } catch (error) {
     console.error('Error synchronizing database:', error);

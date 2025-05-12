@@ -7,6 +7,8 @@ interface SidebarProps {
   setIsCollapsed: (isCollapsed: boolean) => void;
   currentPageTitle?: string;
   onSectionSelect?: (section: 'note' | 'trash') => void;
+  onMoveToTrash?: () => void;
+  onNoteSelect?: () => void;
 }
 
 export default function Sidebar({
@@ -14,6 +16,8 @@ export default function Sidebar({
   setIsCollapsed,
   currentPageTitle,
   onSectionSelect,
+  onMoveToTrash,
+  onNoteSelect,
 }: SidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -59,11 +63,10 @@ export default function Sidebar({
 
   // Handler for Move to Trash
   function handleMoveToTrash() {
-    if (currentPage) {
-      setTrashedPages((prev) => [...prev, currentPage]);
-      setCurrentPage(null);
-      setShowMenu(false);
+    if (onMoveToTrash) {
+      onMoveToTrash();
     }
+    setShowMenu(false);
   }
 
   // Handler for restoring a trashed page
@@ -135,7 +138,7 @@ export default function Sidebar({
                 />
               </svg>
               {/* Bold title */}
-              <span className="font-bold">{currentPage.title}</span>
+              <span className="font-bold cursor-pointer hover:underline" onClick={onNoteSelect}>{currentPage.title}</span>
               {/* Ellipsis button */}
               <button
                 ref={ellipsisRef}

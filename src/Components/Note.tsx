@@ -57,7 +57,7 @@ export default function Note() {
     const [selectedIcon, setSelectedIcon] = useState<Icon | null>(null);
     const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
     const [selectedSection, setSelectedSection] = useState<'note' | 'trash'>('note');
-    const [trashedNotes, setTrashedNotes] = useState<{ title: string; content: string; id: number }[]>([]);
+    const [trashedNotes, setTrashedNotes] = useState<{ title: string; content: string; id: number; icon?: Icon | null; cover_url?: string | null }[]>([]);
     const { user } = useAuth();
     const saveTimeoutRef = useRef<NodeJS.Timeout>();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -302,20 +302,33 @@ export default function Note() {
 
     // Handler for moving note to trash
     function handleMoveToTrash() {
-        setTrashedNotes(prev => [...prev, { title, content, id: Date.now() }]);
+        // Save the current note to trashedNotes
+        setTrashedNotes(prev => [...prev, { 
+            title, 
+            content, 
+            id: Date.now(),
+            icon: selectedIcon,
+            cover_url: selectedCover?.url
+        }]);
+        
+        // Reset the current note
         setTitle('Untitled');
         setContent('');
         setHasContent(false);
         setSelectedIcon(null);
         setSelectedCover(null);
+        
+        // Switch to trash view
         setSelectedSection('trash');
     }
 
     // Handler for restoring a trashed note
-    function handleRestore(note: { title: string; content: string; id: number }) {
+    function handleRestore(note: { title: string; content: string; id: number; icon?: Icon | null; cover_url?: string | null }) {
         setTitle(note.title);
         setContent(note.content);
         setHasContent(!!note.content);
+        if (note.icon) setSelectedIcon(note.icon);
+        if (note.cover_url) setSelectedCover({ url: note.cover_url, name: 'Cover' });
         setTrashedNotes(prev => prev.filter(n => n.id !== note.id));
         setSelectedSection('note');
     }
@@ -332,6 +345,8 @@ export default function Note() {
                 setIsCollapsed={setIsCollapsed}
                 currentPageTitle={title}
                 onSectionSelect={setSelectedSection}
+                onMoveToTrash={handleMoveToTrash}
+                onNoteSelect={() => setSelectedSection('note')}
             />
             
             <div className="flex-1 overflow-auto scroll-smooth">
