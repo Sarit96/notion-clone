@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import type { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 export interface User {
   id?: string;
@@ -26,7 +26,7 @@ axios.defaults.withCredentials = true;
 
 // Add axios interceptor to add token to requests
 axios.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config: AxiosRequestConfig) => {
     const token = localStorage.getItem('token');
     if (token) {
       if (config.headers) {
@@ -35,7 +35,7 @@ axios.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error: any) => Promise.reject(error)
 );
 
 // Add axios interceptor to handle 401 responses
