@@ -59,7 +59,7 @@ export default function Note() {
     const [selectedSection, setSelectedSection] = useState<'note' | 'trash'>('note');
     const [trashedNotes, setTrashedNotes] = useState<{ title: string; content: string; id: number; icon?: Icon | null; cover_url?: string | null }[]>([]);
     const { user } = useAuth();
-    const saveTimeoutRef = useRef<number | null>(null);
+    const saveTimeoutRef = useRef<NodeJS.Timeout>();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const navigate = useNavigate();
 
@@ -71,7 +71,9 @@ export default function Note() {
                 // Check if user is authenticated (token or Google user)
                 const token = localStorage.getItem('token');
                 const googleUser = localStorage.getItem('googleUser');
-                
+
+                console.log('Auth check:', { hasToken: !!token, hasGoogleUser: !!googleUser });
+
                 if (!token && !googleUser) {
                     // Redirect to login if not authenticated
                     console.error('No authentication found');
@@ -81,11 +83,22 @@ export default function Note() {
 
                 // Fetch note data from API
                 console.log('Loading note data...');
-                const response = await axios.get('/api/notes');
+                const response = await axios.get('/api/notes', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 console.log('Note data received:', response.data);
-                
+
                 const note = response.data;
                 if (note) {
+                    console.log('Setting note data:', {
+                        title: note.title,
+                        contentLength: note.content?.length,
+                        hasIcon: !!note.icon,
+                        hasCover: !!note.cover_url
+                    });
+
                     // Set note title, content, and last saved time
                     setTitle(note.title || 'Untitled');
                     setContent(note.content || '');
@@ -103,10 +116,16 @@ export default function Note() {
                     if (note.cover_url) {
                         setSelectedCover({ url: note.cover_url, name: 'Cover' });
                     }
+                } else {
+                    console.log('No note data received from API');
                 }
             } catch (error: any) {
                 // Handle errors and redirect to login if unauthorized
-                console.error('Error loading note:', error);
+                console.error('Error loading note:', {
+                    status: error.response?.status,
+                    message: error.message,
+                    data: error.response?.data
+                });
                 if (error.response?.status === 401) {
                     navigate('/login');
                 }
@@ -175,7 +194,7 @@ export default function Note() {
         },
     ];
 
-    const filteredCommands = commands.filter(cmd => 
+    const filteredCommands = commands.filter(cmd =>
         cmd.title.toLowerCase().includes(commandSearch.toLowerCase()) ||
         cmd.description.toLowerCase().includes(commandSearch.toLowerCase())
     );
@@ -188,7 +207,7 @@ export default function Note() {
             setContent(newContent);
             setShowCommandMenu(false);
             setCommandSearch('');
-            
+
             // Move cursor after inserted text
             setTimeout(() => {
                 if (textareaRef.current) {
@@ -207,6 +226,13 @@ export default function Note() {
     // Auto-save functionality
     // Auto-save note when title, content, icon, or cover changes
     useEffect(() => {
+        console.log('Autosave effect triggered with:', {
+            title,
+            contentLength: content.length,
+            hasIcon: !!selectedIcon,
+            hasCover: !!selectedCover
+        });
+
         // Clear previous save timeout if any
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
@@ -214,22 +240,44 @@ export default function Note() {
 
         // Skip saving if nothing to save
         if (!title && !content && !selectedIcon && !selectedCover) {
+            console.log('Skipping save - no content to save');
             return;
         }
 
         // Set a timeout to save after 1 second of inactivity
-        saveTimeoutRef.current = window.setTimeout(async () => {
+        saveTimeoutRef.current = setTimeout(async () => {
             setIsSaving(true);
             try {
+                const token = localStorage.getItem('token');
+                console.log('Attempting to save note...', {
+                    title,
+                    contentLength: content.length,
+                    hasIcon: !!selectedIcon,
+                    hasCover: !!selectedCover,
+                    hasToken: !!token
+                });
+
                 // Save note to API
                 const response = await axios.put('/api/notes', {
                     title,
                     content,
                     icon: selectedIcon ? JSON.stringify(selectedIcon) : null,
                     cover_url: selectedCover?.url || null
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
+
+                console.log('Save successful:', response.data);
                 setLastSaved(new Date());
             } catch (error: any) {
+                console.error('Error saving note:', {
+                    status: error.response?.status,
+                    message: error.message,
+                    data: error.response?.data
+                });
+
                 // Redirect to login if unauthorized
                 if (error.response?.status === 401) {
                     navigate('/login');
@@ -248,23 +296,25 @@ export default function Note() {
     }, [title, content, selectedIcon, selectedCover, navigate]);
 
     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        console.log('Title changing to:', e.target.value);
         setTitle(e.target.value);
     };
 
     const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newContent = e.target.value;
+        console.log('Content changing, new length:', newContent.length);
         setContent(newContent);
         setHasContent(newContent.length > 0);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         const target = e.target as HTMLTextAreaElement;
-        
+
         // Open command menu if '/' is pressed at start of textarea
         if (e.key === '/' && target.selectionStart === 0) {
             e.preventDefault();
             setShowCommandMenu(true);
-        } 
+        }
         // Handle commands when menu is open
         else if (showCommandMenu) {
             // Close menu on Escape
@@ -272,12 +322,12 @@ export default function Note() {
                 e.preventDefault();
                 setShowCommandMenu(false);
                 setCommandSearch('');
-            } 
+            }
             // Execute first command on Enter
             else if (e.key === 'Enter' && filteredCommands.length > 0) {
                 e.preventDefault();
                 filteredCommands[0].action();
-            } 
+            }
             // Close menu on Backspace if search is empty
             else if (e.key === 'Backspace' && commandSearch === '') {
                 e.preventDefault();
@@ -303,21 +353,21 @@ export default function Note() {
     // Handler for moving note to trash
     function handleMoveToTrash() {
         // Save the current note to trashedNotes
-        setTrashedNotes(prev => [...prev, { 
-            title, 
-            content, 
+        setTrashedNotes(prev => [...prev, {
+            title,
+            content,
             id: Date.now(),
             icon: selectedIcon,
             cover_url: selectedCover?.url
         }]);
-        
+
         // Reset the current note
         setTitle('Untitled');
         setContent('');
         setHasContent(false);
         setSelectedIcon(null);
         setSelectedCover(null);
-        
+
         // Switch to trash view
         setSelectedSection('trash');
     }
@@ -340,15 +390,15 @@ export default function Note() {
 
     return (
         <div className="flex h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
-            <Sidebar 
-                isCollapsed={isCollapsed} 
+            <Sidebar
+                isCollapsed={isCollapsed}
                 setIsCollapsed={setIsCollapsed}
                 currentPageTitle={title}
                 onSectionSelect={setSelectedSection}
                 onMoveToTrash={handleMoveToTrash}
                 onNoteSelect={() => setSelectedSection('note')}
             />
-            
+
             <div className="flex-1 overflow-auto scroll-smooth">
                 {selectedSection === 'note' ? (
                     <div className={`max-w-4xl mx-auto px-8 py-8 ${!hasContent ? 'h-full flex flex-col' : ''}`}>
@@ -368,7 +418,7 @@ export default function Note() {
                                 ) : null}
                             </div>
                         </div>
-                        
+
                         <div className={`${!hasContent ? 'flex-1 flex flex-col items-center justify-center -mt-20' : ''}`}>
                             {/* Cover image */}
                             {selectedCover && (
@@ -401,14 +451,14 @@ export default function Note() {
 
                             {/* Add icon and cover buttons */}
                             <div className="flex items-center gap-4 mb-8 text-sm">
-                                <button 
+                                <button
                                     onClick={() => setShowIconModal(true)}
                                     className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                                 >
                                     <span className="text-xl">{selectedIcon?.emoji || '🎯'}</span>
                                     {selectedIcon ? 'Change icon' : 'Add icon'}
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setShowCoverModal(true)}
                                     className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                                 >
@@ -425,13 +475,12 @@ export default function Note() {
                                     placeholder="Type '/' for commands"
                                     onChange={handleContentChange}
                                     onKeyDown={handleKeyDown}
-                                    className={`w-full outline-none resize-none bg-transparent text-gray-800 dark:text-gray-200 placeholder-gray-400 text-center transition-all duration-200 ${
-                                        !hasContent 
-                                            ? 'min-h-[100px]' 
-                                            : 'min-h-[500px] text-left px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
-                                    }`}
+                                    className={`w-full outline-none resize-none bg-transparent text-gray-800 dark:text-gray-200 placeholder-gray-400 text-center transition-all duration-200 ${!hasContent
+                                        ? 'min-h-[100px]'
+                                        : 'min-h-[500px] text-left px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
+                                        }`}
                                 />
-                                
+
                                 {/* Command menu */}
                                 {showCommandMenu && (
                                     <div className="absolute top-0 left-0 w-80 bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all duration-200">
@@ -481,7 +530,7 @@ export default function Note() {
                                     Share
                                 </button>
                                 <button className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200">
-                                    ••• 
+                                    •••
                                 </button>
                                 <button
                                     className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-800 rounded-lg transition-all duration-200"
