@@ -68,15 +68,15 @@ export default function Note() {
     useEffect(() => {
         const loadNote = async () => {
             try {
-                // Check if user is authenticated (token or Google user)
+                // Check if user is authenticated
                 const token = localStorage.getItem('token');
                 const googleUser = localStorage.getItem('googleUser');
 
                 console.log('Auth check:', { hasToken: !!token, hasGoogleUser: !!googleUser });
 
-                if (!token && !googleUser) {
+                if (!token) {
                     // Redirect to login if not authenticated
-                    console.error('No authentication found');
+                    console.error('No authentication token found');
                     navigate('/login');
                     return;
                 }
@@ -249,6 +249,12 @@ export default function Note() {
             setIsSaving(true);
             try {
                 const token = localStorage.getItem('token');
+                if (!token) {
+                    console.error('No authentication token found for saving');
+                    navigate('/login');
+                    return;
+                }
+
                 console.log('Attempting to save note...', {
                     title,
                     contentLength: content.length,
