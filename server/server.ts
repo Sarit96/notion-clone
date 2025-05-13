@@ -191,7 +191,7 @@ app.post('/api/auth/login', validateLogin, handleValidationErrors, async (req: R
     const { email, password } = req.body;
 
     // Find user by email with all attributes (including password)
-    const user = await User.findOne({ 
+    const user = await User.findOne({
       where: { email }
     });
 
@@ -244,10 +244,14 @@ app.post('/api/auth/google', async (req: Request, res: Response) => {
         username: email.split('@')[0],
         email,
         password: '', // Empty password for Google users
+        googleId: id // Store Google ID
       });
+    } else if (!user.googleId) {
+      // Update existing user with Google ID if not set
+      await user.update({ googleId: id });
     }
 
-    // Generate JWT token
+    // Generate JWT token with user ID
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET || '',

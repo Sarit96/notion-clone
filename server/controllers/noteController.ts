@@ -6,7 +6,7 @@
 import { Request, Response } from 'express';
 import { models } from '../models';
 
-const { Note } = models;
+const { Note, User } = models;
 
 // Custom interface for Request with user property
 interface CustomRequest extends Request {
@@ -23,9 +23,15 @@ interface CustomRequest extends Request {
 export const getOrCreateNote = async (req: CustomRequest, res: Response) => {
     try {
         const userId = req.user?.userId;
-        
+
         if (!userId) {
             return res.status(401).json({ error: 'User not authenticated' });
+        }
+
+        // Verify user exists
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
         }
 
         // Check if user has a note

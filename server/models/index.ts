@@ -44,7 +44,7 @@ const syncDatabase = async () => {
 
     // Sync all models
     const isDevelopment = process.env.NODE_ENV !== 'production';
-    await sequelize.sync({ force: isDevelopment });
+    await sequelize.sync({ alter: true });
     console.log('Database synchronized successfully');
   } catch (error) {
     console.error('Error synchronizing database:', error);

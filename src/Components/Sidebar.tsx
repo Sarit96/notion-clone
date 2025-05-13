@@ -95,9 +95,8 @@ export default function Sidebar({
   return (
     <div
       ref={sidebarRef}
-      className={`relative bg-gray-100 dark:bg-gray-800 transition-all duration-300 ease-in-out h-full border-r border-gray-200 dark:border-gray-800 ${
-        isCollapsed ? "w-20" : "w-72"
-      }`}
+      className={`relative bg-gray-100 dark:bg-gray-800 transition-all duration-300 ease-in-out h-full border-r border-gray-200 dark:border-gray-800 ${isCollapsed ? "w-20" : "w-72"
+        }`}
     >
       {/* Toggle button */}
       <button
@@ -164,13 +163,6 @@ export default function Sidebar({
                     className="absolute left-0 mt-2 w-64 bg-gray-900 text-white rounded-lg shadow-2xl z-50 border border-gray-700 p-1 animate-fade-in"
                     style={{ top: "110%" }}
                   >
-                    <button className="flex items-center w-full px-3 py-2 hover:bg-gray-800 rounded transition-all">
-                      <span className="mr-3">✏️</span>
-                      <span className="flex-1 text-left">Rename</span>
-                      <span className="text-xs text-gray-400 ml-2">
-                        Ctrl+⇧+R
-                      </span>
-                    </button>
                     <button className="flex items-center w-full px-3 py-2 hover:bg-gray-800 rounded transition-all" onClick={handleMoveToTrash}>
                       <span className="mr-3">🗑️</span>
                       <span className="flex-1 text-left">Move to Trash</span>

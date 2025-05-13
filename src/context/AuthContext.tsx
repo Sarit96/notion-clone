@@ -35,7 +35,9 @@ axios.interceptors.request.use(
     }
     return config;
   },
-  (error: any) => Promise.reject(error)
+  (error: unknown) => {
+    return Promise.reject(error);
+  }
 );
 
 // Add axios interceptor to handle 401 responses

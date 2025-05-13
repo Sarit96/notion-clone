@@ -7,12 +7,13 @@ interface UserAttributes {
   username: string;
   email: string;
   password: string;
+  googleId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
 // Define interface for User creation attributes (excluding auto-generated fields)
-interface UserCreationAttributes extends Omit<UserAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+interface UserCreationAttributes extends Omit<UserAttributes, 'id' | 'createdAt' | 'updatedAt'> { }
 
 // Define User model class
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
@@ -20,6 +21,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public username!: string;
   public email!: string;
   public password!: string;
+  public googleId?: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -64,6 +66,12 @@ User.init(
     password: {
       type: DataTypes.STRING(255),
       allowNull: false,
+    },
+    // Google ID field
+    googleId: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      unique: true,
     },
     // Timestamp fields
     createdAt: {
