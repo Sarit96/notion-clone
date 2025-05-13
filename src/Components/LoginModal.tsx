@@ -28,7 +28,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     try {
       const { credential } = response;
       const decoded: any = jwtDecode(credential);
-      
+
       const googleUser = {
         email: decoded.email,
         name: decoded.name,
@@ -37,9 +37,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         username: decoded.email.split('@')[0]
       };
 
+      // Store Google user data temporarily
+      localStorage.setItem('googleUser', JSON.stringify(googleUser));
+
       // Send Google user data to backend
       const res = await axios.post('/api/auth/google', googleUser);
-      
+
+      if (!res.data.token || !res.data.user) {
+        throw new Error('Invalid response from server');
+      }
+
       // Store the token and user data
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
