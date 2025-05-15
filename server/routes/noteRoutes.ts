@@ -4,7 +4,7 @@
  */
 
 import express from 'express';
-import { getOrCreateNote, updateNote } from '../controllers/noteController';
+import { getOrCreateNote, updateNote, shareNote, getNotePdf } from '../controllers/noteController';
 import { authenticateToken } from '../middleware/auth';
 
 const router = express.Router();
@@ -17,5 +17,11 @@ router.get('/', getOrCreateNote);
 
 // Update note content and metadata
 router.put('/', updateNote);
+
+// Share a note (generate publicId and return public link)
+router.post('/:id/share', shareNote);
+
+// Generate and stream a PDF of a note
+router.get('/:id/pdf', getNotePdf);
 
 export default router; 

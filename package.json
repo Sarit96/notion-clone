@@ -10,6 +10,7 @@
     "axios": "^1.9.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.501.0",
+    "pdfkit": "^0.17.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3",
@@ -43,6 +44,7 @@
   "devDependencies": {
     "@types/axios": "^0.9.36",
     "@types/node": "^22.14.1",
+    "@types/pdfkit": "^0.13.9",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@types/react-router-dom": "^5.3.3",

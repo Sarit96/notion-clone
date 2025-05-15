@@ -10,9 +10,10 @@ interface NoteAttributes {
   userId: number;
   createdAt: Date;
   updatedAt: Date;
+  publicId: string | null;
 }
 
-interface NoteCreationAttributes extends Omit<NoteAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+interface NoteCreationAttributes extends Omit<NoteAttributes, 'id' | 'createdAt' | 'updatedAt'> { }
 
 class Note extends Model<NoteAttributes, NoteCreationAttributes> implements NoteAttributes {
   public id!: number;
@@ -23,6 +24,7 @@ class Note extends Model<NoteAttributes, NoteCreationAttributes> implements Note
   public userId!: number;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+  public publicId!: string | null;
 
   static associate(models: any) {
     Note.belongsTo(models.User, { foreignKey: 'userId' });
@@ -67,7 +69,12 @@ Note.init(
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: false,
-    }
+    },
+    publicId: {
+      type: DataTypes.STRING(64),
+      allowNull: true,
+      unique: true,
+    },
   },
   {
     sequelize,

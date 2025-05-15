@@ -62,6 +62,9 @@ export default function Note() {
     const saveTimeoutRef = useRef<NodeJS.Timeout>();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const navigate = useNavigate();
+    const [noteId, setNoteId] = useState<number | null>(null);
+    const [publicLink, setPublicLink] = useState<string | null>(null);
+    const [isSharing, setIsSharing] = useState(false);
 
     // Load note data from API
     // Load note data when component mounts
@@ -104,6 +107,7 @@ export default function Note() {
                     setContent(note.content || '');
                     setHasContent((note.content || '').length > 0);
                     setLastSaved(note.last_saved ? new Date(note.last_saved) : null);
+                    setNoteId(note.id);
                     // Parse and set icon if present
                     if (note.icon) {
                         try {
@@ -394,6 +398,30 @@ export default function Note() {
         setTrashedNotes(prev => prev.filter(n => n.id !== note.id));
     }
 
+    const handleSharePdf = async () => {
+        if (!noteId) return;
+        setIsSharing(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`/api/notes/${noteId}/pdf`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                responseType: 'blob',
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${title || 'note'}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            alert('Failed to generate PDF');
+        } finally {
+            setIsSharing(false);
+        }
+    };
+
     return (
         <div className="flex h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
             <Sidebar
@@ -532,8 +560,12 @@ export default function Note() {
                         {/* Action buttons - only show when there's content */}
                         {hasContent && (
                             <div className="flex items-center gap-2 justify-end mt-6">
-                                <button className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200">
-                                    Share
+                                <button
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
+                                    onClick={handleSharePdf}
+                                    disabled={isSharing}
+                                >
+                                    {isSharing ? 'Generating PDF...' : 'Share as PDF'}
                                 </button>
                                 <button className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200">
                                     •••

@@ -72,7 +72,7 @@ export const NoteProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const endpoint = noteData.parentId ? '/api/notes/subnote' : '/api/notes';
             const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
@@ -80,14 +80,14 @@ export const NoteProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             if (!response.ok) throw new Error('Failed to create note');
-            
+
             const newNote = await response.json();
             const noteWithDates = {
                 ...newNote,
                 createdAt: new Date(newNote.createdAt),
                 updatedAt: new Date(newNote.updatedAt)
             };
-            
+
             setNotes(prev => [...prev, noteWithDates]);
             await loadNotes(); // Reload the notes list
             return noteWithDates;
@@ -102,7 +102,7 @@ export const NoteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             const response = await fetch(`/api/notes/${id}`, {
                 method: 'PATCH',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
@@ -112,7 +112,7 @@ export const NoteProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!response.ok) throw new Error('Failed to update note');
 
             const updatedNote = await response.json();
-            setNotes(prev => prev.map(note => 
+            setNotes(prev => prev.map(note =>
                 note.id === id ? {
                     ...note,
                     ...updatedNote,
