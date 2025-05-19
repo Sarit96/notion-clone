@@ -8,6 +8,14 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+// Log the database configuration (without password)
+console.log('Database Configuration:', {
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  dialect: 'mysql'
+});
+
 /**
  * Create Sequelize instance with MySQL configuration
  * - Uses environment variables for database credentials
@@ -22,7 +30,7 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST || 'localhost',
     dialect: 'mysql',
-    logging: false,
+    logging: (msg) => console.log('[Sequelize]', msg), // Enable logging for debugging
     define: {
       timestamps: true,    // Adds createdAt and updatedAt fields
       underscored: true,   // Uses snake_case for column names
@@ -35,7 +43,8 @@ const sequelize = new Sequelize(
     },
     dialectOptions: {
       supportBigNumbers: true,    // Support for BIGINT
-      bigNumberStrings: true      // Return BIGINT as strings
+      bigNumberStrings: true,     // Return BIGINT as strings
+      connectTimeout: 60000       // Increase connection timeout to 60 seconds
     }
   }
 );
@@ -44,13 +53,34 @@ const sequelize = new Sequelize(
  * Test database connection
  * Logs success or failure of database connection
  */
-sequelize.authenticate()
-  .then(() => console.log('DB connected'))
-  .catch(console.error);
+const testConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connection has been established successfully.');
 
-// Sync models with database
-sequelize.sync()
-  .then(() => console.log('All models were synchronized successfully.'))
+    // Test if database exists
+    const [results] = await sequelize.query('SELECT DATABASE() as current_db');
+    console.log('Current database:', results[0]);
+
+    return true;
+  } catch (error) {
+    console.error('❌ Unable to connect to the database:', error);
+    return false;
+  }
+};
+
+// Test connection and sync models
+testConnection()
+  .then(async (isConnected) => {
+    if (isConnected) {
+      try {
+        await sequelize.sync();
+        console.log('✅ All models were synchronized successfully.');
+      } catch (error) {
+        console.error('❌ Error synchronizing models:', error);
+      }
+    }
+  })
   .catch(console.error);
 
 export default sequelize; 

@@ -8,6 +8,7 @@ interface NoteAttributes {
   icon: string | null;
   cover_url: string | null;
   userId: number;
+  parentId: number | null;
   createdAt: Date;
   updatedAt: Date;
   publicId: string | null;
@@ -22,6 +23,7 @@ class Note extends Model<NoteAttributes, NoteCreationAttributes> implements Note
   public icon!: string | null;
   public cover_url!: string | null;
   public userId!: number;
+  public parentId!: number | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public publicId!: string | null;
@@ -59,6 +61,14 @@ Note.init(
       allowNull: false,
       references: {
         model: 'users',
+        key: 'id',
+      },
+    },
+    parentId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'notes',
         key: 'id',
       },
     },
