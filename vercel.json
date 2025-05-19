@@ -3,13 +3,17 @@
     "builds": [
         {
             "src": "server/server.ts",
-            "use": "@vercel/node"
+            "use": "@vercel/node",
+            "config": {
+                "buildCommand": "cd server && npm install && npm run build",
+                "outputDirectory": "dist"
+            }
         }
     ],
     "routes": [
         {
             "src": "/(.*)",
-            "dest": "server/server.ts"
+            "dest": "server/dist/server.js"
         }
     ]
 }
