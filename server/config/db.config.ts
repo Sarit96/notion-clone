@@ -48,4 +48,9 @@ sequelize.authenticate()
   .then(() => console.log('DB connected'))
   .catch(console.error);
 
+// Sync models with database
+sequelize.sync()
+  .then(() => console.log('All models were synchronized successfully.'))
+  .catch(console.error);
+
 export default sequelize; 

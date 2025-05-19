@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 
+//user and context types
 export interface User {
   id?: string;
   username?: string;
@@ -18,6 +19,8 @@ interface AuthContextType {
   logout: () => void;
 }
 
+
+// Create the AuthContext
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Configure axios defaults
