@@ -2,18 +2,14 @@
     "version": 2,
     "builds": [
         {
-            "src": "server/server.ts",
-            "use": "@vercel/node",
-            "config": {
-                "buildCommand": "cd server && npm install && npm run build",
-                "outputDirectory": "dist"
-            }
+            "src": "dist/server.js",
+            "use": "@vercel/node"
         }
     ],
     "routes": [
         {
             "src": "/(.*)",
-            "dest": "server/dist/server.js"
+            "dest": "dist/server.js"
         }
     ]
 }
