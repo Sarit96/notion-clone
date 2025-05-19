@@ -27,7 +27,7 @@ export const getSubnotes = async (req: CustomRequest, res: Response) => {
             where: {
                 userId,
                 parentId
-            },
+            } as any,
             order: [['createdAt', 'ASC']]
         });
 
