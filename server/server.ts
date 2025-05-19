@@ -49,7 +49,10 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: [
+    'http://localhost:3000',
+    'https://notion-clone-ten-orcin.vercel.app/'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'x-google-user'],
   credentials: true,
